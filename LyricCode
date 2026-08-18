@@ -1,0 +1,244 @@
+import tkinter as tk
+
+BOX_W = 500
+BOX_H = 180
+
+FONT = ("Arial", 32, "bold")
+
+BG_COLOR = "white"
+FG_COLOR = "black"
+
+RISE_SPEED = 2
+
+BOXES = [
+
+    {
+        "text": "Two hearts committed to hopeless fate",
+        "show_at": 2.0,
+        "type_speed": 80,
+        "duration": 20,
+        "x": 500,
+        "y": 650,
+    },
+
+    {
+        "text": "I'd serve my life sentence",
+        "show_at": 6,
+        "type_speed": 110,
+        "duration": 20,
+        "x": 200,
+        "y": 800,
+    },
+
+    {
+        "text": "a thousand times, woman",
+        "show_at": 8.0,
+        "type_speed": 80,
+        "duration": 20,
+        "x": 700,
+        "y": 800,
+    },
+
+    {
+        "text": "When the gavel hit the stand",
+        "show_at": 10,
+        "type_speed": 80,
+        "duration": 20,
+        "x": 300,
+        "y": 800,
+    },
+
+    {
+        "text": "I'm damned to loving you",
+        "show_at": 13,
+        "type_speed": 75,
+        "duration": 20,
+        "x": 700,
+        "y": 800,
+    },
+
+]
+
+class LyricBox:
+
+    def __init__(
+        self,
+        master,
+        text,
+        x,
+        y,
+        type_speed,
+        duration
+    ):
+
+        self.master = master
+        self.text = text
+
+        self.x = x
+        self.y = float(y)
+
+        self.type_speed = type_speed
+        self.duration = duration
+
+        self.win = tk.Toplevel(master)
+
+        self.win.overrideredirect(True)
+        self.win.attributes("-topmost", True)
+
+        self.win.geometry(
+            f"{BOX_W}x{BOX_H}+{int(self.x)}+{int(self.y)}"
+        )
+
+        self.label = tk.Label(
+            self.win,
+            text="",
+            font=FONT,
+            bg=BG_COLOR,
+            fg=FG_COLOR,
+            wraplength=BOX_W - 60,
+            justify="center"
+        )
+
+        self.label.pack(
+            expand=True,
+            fill="both"
+        )
+
+        self.index = 0
+
+        self.typewriter()
+
+        self.destroy_timer = self.win.after(
+            int(duration * 1000),
+            self.destroy
+        )
+
+    def typewriter(self):
+
+        if self.index < len(self.text):
+
+            self.index += 1
+
+            self.label.config(
+                text=self.text[:self.index]
+            )
+
+            self.win.after(
+                self.type_speed,
+                self.typewriter
+            )
+
+    def move(self):
+
+        self.y -= RISE_SPEED
+
+        self.win.geometry(
+            f"{BOX_W}x{BOX_H}+{int(self.x)}+{int(self.y)}"
+        )
+
+    def destroy(self):
+
+        try:
+            self.win.destroy()
+        except:
+            pass
+
+class LyricAnimation:
+
+    def __init__(self, root):
+
+        self.root = root
+
+        self.active_boxes = []
+
+        self.start_time = 0
+
+        self.next_box = 0
+
+        self.update()
+
+    def update(self):
+
+        current_time = self.root.tk.call(
+            "after",
+            "info"
+        )
+
+        if self.start_time == 0:
+
+            self.start_time = self.root.winfo_toplevel().tk.call(
+                "clock",
+                "milliseconds"
+            )
+
+        now = self.root.winfo_toplevel().tk.call(
+            "clock",
+            "milliseconds"
+        )
+
+        elapsed = (now - self.start_time) / 1000
+
+        while (
+            self.next_box < len(BOXES)
+            and elapsed >= BOXES[self.next_box]["show_at"]
+        ):
+
+            data = BOXES[self.next_box]
+
+            x = data["x"]
+            y = data["y"]
+
+            if x is None:
+
+                screen_w = self.root.winfo_screenwidth()
+
+                x = (screen_w - BOX_W) // 2
+
+            if y is None:
+
+                screen_h = self.root.winfo_screenheight()
+
+                y = screen_h - BOX_H - 50
+
+            box = LyricBox(
+                self.root,
+                data["text"],
+                x,
+                y,
+                data["type_speed"],
+                data["duration"]
+            )
+
+            self.active_boxes.append(box)
+
+            self.next_box += 1
+
+        for box in self.active_boxes[:]:
+
+            try:
+
+                box.move()
+
+                if box.y + BOX_H < 0:
+
+                    box.destroy()
+
+                    self.active_boxes.remove(box)
+
+            except:
+
+                if box in self.active_boxes:
+                    self.active_boxes.remove(box)
+
+        self.root.after(
+            16,
+            self.update
+        )
+
+root = tk.Tk()
+
+root.withdraw()
+
+app = LyricAnimation(root)
+
+root.mainloop()
