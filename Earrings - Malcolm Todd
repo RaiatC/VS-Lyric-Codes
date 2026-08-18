@@ -1,0 +1,241 @@
+import tkinter as tk
+import time
+
+BOX_W = 500
+BOX_H = 180
+
+FONT = ("Arial", 32, "bold")
+
+BG_COLOR = "white"
+FG_COLOR = "black"
+
+RISE_SPEED = 4
+
+BOXES = [
+
+    {
+        "text": "extra, extra, read all about it",
+        "show_at": 0,
+        "type_speed": 80,
+        "duration": 8,
+        "x": 50,
+        "y": 800,
+    },
+
+    {
+        "text": "Mac is in his feelings and he can't get out of it",
+        "show_at": 3,
+        "type_speed": 70,
+        "duration": 9,
+        "x": 900,
+        "y": 850,
+    },
+
+    {
+        "text": "(From you, oh)",
+        "show_at": 6.5,
+        "type_speed": 120,
+        "duration": 7,
+        "x": 300,
+        "y": 800,
+    },
+
+    {
+        "text": "extra, extra, read all about it",
+        "show_at": 7,
+        "type_speed": 80,
+        "duration": 8,
+        "x": 1000,
+        "y": 800,
+    },
+
+    {
+        "text": "Mac is in his feelings and he can't get out of it",
+        "show_at": 8,
+        "type_speed": 70,
+        "duration": 9,
+        "x": 100,
+        "y": 850,
+    },
+
+    {
+        "text": "(From you, oh)",
+        "show_at": 9,
+        "type_speed": 120,
+        "duration": 7,
+        "x": 1000,
+        "y": 800,
+    },
+
+    {
+        "text": "extra, extra, read all about it",
+        "show_at": 13,
+        "type_speed": 80,
+        "duration": 8,
+        "x": 400,
+        "y": 850,
+    },
+
+    {
+        "text": "Mac is in his feelings and he can't get out of it",
+        "show_at": 14,
+        "type_speed": 70,
+        "duration": 9,
+        "x": 1050,
+        "y": 800,
+    },
+
+    {
+        "text": "(From you, oh)",
+        "show_at": 16,
+        "type_speed": 120,
+        "duration": 7,
+        "x": 150,
+        "y": 800,
+    },
+
+    {
+        "text": "extra, extra, read all about it",
+        "show_at": 18,
+        "type_speed": 80,
+        "duration": 8,
+        "x": 1150,
+        "y": 850,
+    },
+
+    {
+        "text": "Mac is in his feelings and he can't get out of it",
+        "show_at": 20,
+        "type_speed": 70,
+        "duration": 10,
+        "x": 250,
+        "y": 800,
+    },
+
+]
+
+class LyricBox:
+
+    def __init__(self, root, data):
+
+        self.root = root
+
+        self.text = data["text"]
+        self.x = data["x"]
+        self.y = float(data["y"])
+
+        self.type_speed = data["type_speed"]
+
+        self.window = tk.Toplevel(root)
+
+        self.window.overrideredirect(True)
+        self.window.attributes("-topmost", True)
+
+        self.window.geometry(
+            f"{BOX_W}x{BOX_H}+{self.x}+{int(self.y)}"
+        )
+
+        self.label = tk.Label(
+            self.window,
+            text="",
+            font=FONT,
+            bg=BG_COLOR,
+            fg=FG_COLOR,
+            wraplength=BOX_W - 50,
+            justify="center"
+        )
+
+        self.label.pack(
+            expand=True,
+            fill="both"
+        )
+
+        self.index = 0
+        self.type_text()
+
+    def type_text(self):
+
+        if self.index < len(self.text):
+
+            self.index += 1
+
+            self.label.config(
+                text=self.text[:self.index]
+            )
+
+            self.window.after(
+                self.type_speed,
+                self.type_text
+            )
+
+    def move(self):
+
+        self.y -= RISE_SPEED
+
+        self.window.geometry(
+            f"{BOX_W}x{BOX_H}+{self.x}+{int(self.y)}"
+        )
+
+    def destroy(self):
+
+        try:
+            self.window.destroy()
+        except:
+            pass
+
+class Animation:
+
+    def __init__(self, root):
+
+        self.root = root
+
+        self.boxes = []
+
+        self.next_box = 0
+
+        self.start_time = time.monotonic()
+
+        self.update()
+
+    def update(self):
+
+        elapsed = time.monotonic() - self.start_time
+
+        while (
+            self.next_box < len(BOXES)
+            and elapsed >= BOXES[self.next_box]["show_at"]
+        ):
+
+            data = BOXES[self.next_box]
+
+            box = LyricBox(
+                self.root,
+                data
+            )
+
+            self.boxes.append(box)
+
+            self.next_box += 1
+
+        for box in self.boxes[:]:
+
+            box.move()
+
+            if box.y + BOX_H < 0:
+
+                box.destroy()
+
+                self.boxes.remove(box)
+
+        self.root.after(
+            16,
+            self.update
+        )
+
+root = tk.Tk()
+
+root.withdraw()
+
+animation = Animation(root)
+
+root.mainloop()
